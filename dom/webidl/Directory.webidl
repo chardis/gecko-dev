@@ -81,6 +81,33 @@ interface Directory {
   // Promise<boolean>
   Promise remove((DOMString or File or Directory) path);
 
+/*
+   * Moves (renames) a file or directory. The source path must be contained in
+   * current directory or its descendents.
+   *
+   * @param path The source. It can be a relative path string (to current
+   * directory), a File or Directory object.
+   * @param dest The destination. If a DOM string is passed, it is the relative
+   * path to current directory and can't contain '..' segment. If a Directory
+   * object is passed, the source will be moved to that directory. If a
+   * DestinationDict is passed, the parent directory and the new name of the
+   * destination must be specified.
+   * @return If the source doesn't exist or the destination already exists, move
+   * should fail and the returning AbortableProgressPromise is rejected with a
+   * DOM error. During the operation, the path of the current file being moved
+   * will be sent as progress value of the AbortableProgressPromise.
+   *
+   * It should be
+   *   AbortablePromise move((DOMString or File or Directory) path,
+   *     (DOMString or Directory or DestinationDict) dest);
+   * but gecko currently requires the last union argument with Dictionary
+   * memeber to be optional.
+   */
+  [NewObject]
+  // AbortablePromise<void>
+  AbortablePromise move((DOMString or File or Directory) path,
+    optional (DOMString or Directory or DestinationDict) dest);
+
   /*
    * Deletes a file or a directory recursively. The target should be a
    * descendent of current directory.

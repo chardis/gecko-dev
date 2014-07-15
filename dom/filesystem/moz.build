@@ -24,6 +24,7 @@ SOURCES += [
     'FileSystemTaskBase.cpp',
     'FileSystemUtils.cpp',
     'GetFileOrDirectoryTask.cpp',
+    'MoveTask.cpp',
     'RemoveTask.cpp',
 ]
 

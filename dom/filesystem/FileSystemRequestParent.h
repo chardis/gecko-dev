@@ -15,6 +15,7 @@ namespace mozilla {
 namespace dom {
 
 class FileSystemBase;
+class FileSystemTaskBase;
 
 class FileSystemRequestParent MOZ_FINAL
   : public PFileSystemRequestParent
@@ -35,12 +36,15 @@ public:
   virtual void
   ActorDestroy(ActorDestroyReason why) MOZ_OVERRIDE;
 
+  virtual bool
+  RecvAbortMove() MOZ_OVERRIDE;
 private:
   // Private destructor, to discourage deletion outside of Release():
   virtual
   ~FileSystemRequestParent();
 
   nsRefPtr<FileSystemBase> mFileSystem;
+  nsRefPtr<FileSystemTaskBase> mTask;
 };
 
 } // namespace dom

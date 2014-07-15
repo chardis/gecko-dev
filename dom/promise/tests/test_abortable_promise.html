@@ -1,0 +1,100 @@
+<!--
+  Any copyright is dedicated to the Public Domain.
+  http://creativecommons.org/publicdomain/zero/1.0/
+-->
+<html>
+<head>
+  <title>Promise.resolve(anything) Test</title>
+  <script type="application/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
+</head>
+<body>
+<p id="display"></p>
+<div id="content" style="display: none">
+
+</div>
+<pre id="test">
+<script type="application/javascript"><!--
+
+SimpleTest.waitForExplicitFinish();
+SpecialPowers.pushPrefEnv({"set": [["dom.abortablepromise.enabled", true]]}, runTest);
+
+// Aborting pending promise should first reject the promise and then call the
+// abortable callback.
+function testPending(succeed, fail) {
+  var p = new AbortablePromise(function(resolve, reject) {
+    // Wait for a while so that the promise can be aborted.
+    SimpleTest.executeSoon(function() {
+      resolve(0);
+    });
+  }, function abortable() {
+    ok(true, "Promise aborted.");
+    succeed();
+  });
+
+  p.then(function() {
+    ok(false, "Failed to abort pending promise.");
+    fail();
+  }, function(what) {
+    is(what && what.name, "NS_ERROR_ABORT", "Should have NS_ERROR_ABORT exception.");
+  });
+
+  // Abort the promise on creation.
+  p.abort();
+}
+
+// Do nothing when aborting resolved promise.
+function testResolved(succeed, fail) {
+  var p = new AbortablePromise(function(resolve, reject) {
+    resolve();
+  }, function abortable() {
+    ok(false, "Should not abort a resolved promise.");
+    fail();
+  });
+
+  p.then(function() {
+    ok(true, "Promised resolved.");
+    p.abort();
+    SimpleTest.executeSoon(function() {
+      succeed();
+    });
+  }, function(what) {
+    ok(false, "Failed to reslove promise: " + what);
+    fail();
+  });
+}
+
+// Do nothing when aborting rejected promise.
+function testRejected(succeed, fail) {
+  var p = new AbortablePromise(function(resolve, reject) {
+    reject(0);
+  }, function abortable() {
+    ok(false, "Should not abort a rejected promise.");
+    fail();
+  });
+
+  p.then(function() {
+    ok(false, "Failed to reject promise.");
+    fail();
+  }, function(what) {
+    is(what, 0, "promise rejected: " + what);
+    p.abort();
+    SimpleTest.executeSoon(function() {
+      succeed();
+    });
+  });
+}
+
+function runTest() {
+  var tests = [];
+  [testPending, testResolved, testRejected].forEach(function(test) {
+    tests.push(new Promise(test));
+  });
+  Promise.all(tests).then(SimpleTest.finish, SimpleTest.finish);
+}
+// -->
+</script>
+</pre>
+</body>
+</html>
+

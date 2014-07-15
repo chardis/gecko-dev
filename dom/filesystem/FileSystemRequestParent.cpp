@@ -9,7 +9,7 @@
 #include "CreateFileTask.h"
 #include "GetFileOrDirectoryTask.h"
 #include "RemoveTask.h"
-
+#include "MoveTask.h"
 #include "mozilla/AppProcessChecker.h"
 #include "mozilla/dom/FileSystemBase.h"
 
@@ -28,7 +28,7 @@ FileSystemRequestParent::~FileSystemRequestParent()
     case FileSystemParams::TFileSystem##name##Params: {                        \
       const FileSystem##name##Params& p = aParams;                             \
       mFileSystem = FileSystemBase::FromString(p.filesystem());                \
-      task = new name##Task(mFileSystem, p, this);                             \
+      mTask = new name##Task(mFileSystem, p, this);                             \
       break;                                                                   \
     }
 
@@ -37,13 +37,12 @@ FileSystemRequestParent::Dispatch(ContentParent* aParent,
                                   const FileSystemParams& aParams)
 {
   MOZ_ASSERT(aParent, "aParent should not be null.");
-  nsRefPtr<FileSystemTaskBase> task;
   switch (aParams.type()) {
-
     FILESYSTEM_REQUEST_PARENT_DISPATCH_ENTRY(CreateDirectory)
     FILESYSTEM_REQUEST_PARENT_DISPATCH_ENTRY(CreateFile)
     FILESYSTEM_REQUEST_PARENT_DISPATCH_ENTRY(GetFileOrDirectory)
     FILESYSTEM_REQUEST_PARENT_DISPATCH_ENTRY(Remove)
+    FILESYSTEM_REQUEST_PARENT_DISPATCH_ENTRY(Move)
 
     default: {
       NS_RUNTIMEABORT("not reached");
@@ -51,7 +50,7 @@ FileSystemRequestParent::Dispatch(ContentParent* aParent,
     }
   }
 
-  if (NS_WARN_IF(!task || !mFileSystem)) {
+  if (NS_WARN_IF(!mTask || !mFileSystem)) {
     // Should never reach here.
     return false;
   }
@@ -60,7 +59,7 @@ FileSystemRequestParent::Dispatch(ContentParent* aParent,
     // Check the content process permission.
 
     nsCString access;
-    task->GetPermissionAccessType(access);
+    mTask->GetPermissionAccessType(access);
 
     nsAutoCString permissionName;
     permissionName = mFileSystem->GetPermission();
@@ -72,7 +71,7 @@ FileSystemRequestParent::Dispatch(ContentParent* aParent,
     }
   }
 
-  task->Start();
+  mTask->Start();
   return true;
 }
 
@@ -85,6 +84,14 @@ FileSystemRequestParent::ActorDestroy(ActorDestroyReason why)
   mFileSystem->Shutdown();
   mFileSystem = nullptr;
 }
+
+bool
+FileSystemRequestParent::RecvAbortMove()
+{
+  static_cast<MoveTask*>(mTask.get())->AbortCallback();
+  return true;
+}
+
 
 } // namespace dom
 } // namespace mozilla

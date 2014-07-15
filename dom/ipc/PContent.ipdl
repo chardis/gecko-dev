@@ -240,6 +240,15 @@ union FileSystemPathOrFileValue
   PBlob;
 };
 
+struct FileSystemMoveParams
+{
+  nsString filesystem;
+  nsString directory;
+  FileSystemPathOrFileValue src;
+  nsString destDirectory;
+  nsString destName;
+};
+
 struct FileSystemRemoveParams
 {
   nsString filesystem;
@@ -253,6 +262,7 @@ union FileSystemParams
   FileSystemCreateDirectoryParams;
   FileSystemCreateFileParams;
   FileSystemGetFileOrDirectoryParams;
+  FileSystemMoveParams;
   FileSystemRemoveParams;
 };
 

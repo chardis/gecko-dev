@@ -1,0 +1,243 @@
+<!--
+  Any copyright is dedicated to the Public Domain.
+  http://creativecommons.org/publicdomain/zero/1.0/
+-->
+<!DOCTYPE HTML>
+<html> <!--
+https://bugzilla.mozilla.org/show_bug.cgi?id=934368
+-->
+<head>
+  <title>Test Directory#move of the FileSystem API for device storage</title>
+  <script type="text/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+  <script type="text/javascript" src="devicestorage_common.js"></script>
+
+<link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css" />
+</head>
+<body>
+<a target="_blank" href="https://bugzilla.mozilla.org/show_bug.cgi?id=935883">Mozilla Bug 935883</a>
+<p id="display"></p>
+<div id="content" style="display: none">
+</div>
+<pre id="test">
+<script class="testbody" type="application/javascript;version=1.7">
+
+devicestorage_setup();
+
+let storages = null;
+let gTestCount = 0;
+let gFileMap1 = {};
+let gFileMap2 = {};
+let gTestCases = [
+  // Move a non-existent file should return false.
+  {
+    spath: "non-existent.png",
+    stype: "string",
+    dpath: "non-existent1.png",
+    dtype: "string",
+    sstorage: true,
+    shouldPass: false
+  },
+
+  // Move an existent file to non-existent file in same storage should return true.
+  {
+    spath: "sub1/sub2/a.png",
+    stype: "string",
+    dpath: "sub1/b.png",
+    dtype: "string",
+    sstorage: true,
+    shouldPass: true
+  },
+
+  // Move an existent file to an existent file in same storage should return false.
+  {
+    spath: "sub1/b.png",
+    stype: "string",
+    dpath: "sub/b.png",
+    dtype: "string",
+    sstorage: true,
+    shouldPass: false
+  },
+
+  // Move an existent directory to existent directory in same storage should return false.
+  {
+    spath: "sub1",
+    stype: "string",
+    dpath: "sub",
+    dtype: "string",
+    sstorage: true,
+    shouldPass: false
+  },
+  
+   // Move an existent directory to non-existent directory in same storage should return true.
+  {
+    spath: "sub1",
+    stype: "string",
+    dpath: "sub/sub1",
+    dtype: "string",
+    sstorage: true,
+    shouldPass: true
+  },
+  
+  // Move an existent file to non-existent directory in same storage should return true.
+  {
+    spath: "sub/b.png",
+    stype: "string",
+    dpath: "non-existent/a.png",
+    dtype: "string",
+    sstorage: false,
+    shouldPass: true
+  },
+  
+  // Move an existent directory to existent directory in same storage should return true.
+  {
+    spath: "sub3",
+    stype: "directory",
+    dpath: "sub4",
+    dtype: "directory",
+    sstorage: true,
+    shouldPass: true
+  },
+
+];
+
+function createTestFiles(storage, callback) {
+  function createTestFile(path) {
+    return new Promise(function(resolve, reject) {
+      function addNamed() {
+        var req = storage.addNamed(createRandomBlob("image/png"), path);
+
+        req.onsuccess = function() {
+          ok(true, path + " was created.");
+          resolve();
+        };
+
+        req.onerror = function(e) {
+          ok(false, "Failed to create " + path + ': ' + e.target.error.name);
+          reject();
+        };
+      }
+
+      // Bug 980136. Check if the file exists before we create.
+      var req = storage.get(path);
+
+      req.onsuccess = function() {
+        ok(true, path + " exists. Do not need to create.");
+        resolve();
+      };
+
+      req.onerror = function(e) {
+        ok(true, path + " does not exists: " + e.target.error.name);
+        addNamed();
+      };
+    });
+  }
+
+  let arr = [];
+
+  ["sub1/sub2/a.png", "sub/b.png", "sub3/a.png", "sub3/b.png", "sub3/c.png", "sub4/b.png"].forEach(function(path) {
+    arr.push(createTestFile(path));
+  });
+
+  Promise.all(arr).then(function() {
+    callback();
+  }, function() {
+    ok(false, "Failed to created test files.");
+    devicestorage_cleanup();
+  });
+}
+
+function runTest() {
+  gTestCount = 0;
+  createTestFiles(storages[0], function() {
+    function cbError(e) {
+      ok(false, "Should not arrive at cbError! Error: " + e.name);
+      devicestorage_cleanup();
+    }
+
+    function cbSuccess(r) {
+      ok(r, "Should get the file - " + this);
+      gFileMap1[this] = r;
+    }
+    ok(true, " in createTestFiles callback:" + storages.length);
+    if (storages.length > 1){
+      storages[1].getRoot().then(function(root) {
+        gFileMap2["/"] = root;
+        ok(true, root + " was storages[1].");
+      }, cbError);
+    }
+    
+
+    // Get directory and file objects.
+    storages[0].getRoot().then(function(root) {
+      ok(root, "Should get root directory.");
+      gFileMap1["/"] = root;
+      ok(true, root + " was storages[0].");
+      let arr = [];
+
+      ["sub1", "sub1/sub2", "sub1/sub2/a.png", "sub", "sub/b.png", "sub3", "sub4"].forEach(function(path) {
+        arr.push(root.get(path).then(cbSuccess.bind(path), cbError));
+      });
+
+      Promise.all(arr).then(function() {
+        testNextRemove();
+      }, function() {
+        ok(false, "Failed to get test files.");
+        devicestorage_cleanup();
+      });
+    }, cbError);
+  });
+}
+
+function testNextRemove() {
+  ok(true, " in testNextRemove.");
+  if (gTestCount < gTestCases.length) {
+    let data = gTestCases[gTestCount++];
+    let spath;
+    let dpath;
+    let abort;
+    if (data.stype == "string") {
+      spath = data.spath;
+    } else if(data.stype == "directory") {
+      spath = gFileMap1[data.spath];
+      abort = true;
+    } 
+
+    if (data.dtype == "string") {
+      dpath = data.dpath;
+    } else if(data.dtype == "directory") {
+      dpath = gFileMap1[data.dpath];
+      if (!data.sstorage && storages.length > 1) {
+        dpath = gFileMap2[data.dpath];
+      }
+    } 
+    ok(true, "testNextRemove:" + spath + ":" + dpath);
+    let dir = gFileMap1["/"];
+    let promise = dir.move(spath, dpath);
+    if(abort)
+      promise.abort();
+    promise.then(function(result) {
+      ok(data.shouldPass, "Return value should match to move from" +
+        spath + " to " + dpath);
+      SimpleTest.executeSoon(testNextRemove);
+    }, function(err) {
+      ok(!data.shouldPass, "Error callback was called to move from" +
+        spath + " to " + dpath + '. Error: ' + err.name);
+      SimpleTest.executeSoon(testNextRemove);
+    });
+    return;
+  }
+  devicestorage_cleanup();
+}
+
+ok(navigator.getDeviceStorages, "Should have getDeviceStorages.");
+
+let storages = navigator.getDeviceStorages("sdcard");
+ok(storages, "Should have gotten a storage.");
+
+runTest();
+
+</script>
+</pre>
+</body>
+</html>
+

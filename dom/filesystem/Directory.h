@@ -33,6 +33,8 @@ namespace dom {
 struct CreateFileOptions;
 class FileSystemBase;
 class Promise;
+class AbortablePromise;
+class StringOrDirectoryOrDestinationDict;
 class StringOrFileOrDirectory;
 
 class Directory MOZ_FINAL
@@ -75,6 +77,9 @@ public:
   already_AddRefed<Promise>
   RemoveDeep(const StringOrFileOrDirectory& aPath);
 
+  already_AddRefed<AbortablePromise>
+  Move(const StringOrFileOrDirectory& aPath,
+       const StringOrDirectoryOrDestinationDict& aDest);
   // =========== End WebIDL bindings.============
 
   FileSystemBase*

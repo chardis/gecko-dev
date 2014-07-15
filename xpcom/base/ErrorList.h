@@ -844,6 +844,7 @@
   ERROR(NS_ERROR_DOM_FILESYSTEM_PATH_EXISTS_ERR,           FAILURE(4)),
   ERROR(NS_ERROR_DOM_FILESYSTEM_TYPE_MISMATCH_ERR,         FAILURE(5)),
   ERROR(NS_ERROR_DOM_FILESYSTEM_UNKNOWN_ERR,               FAILURE(6)),
+  ERROR(NS_ERROR_DOM_FILESYSTEM_INVALID_PARAMETERS_ERR,    FAILURE(7)),
 #undef MODULE
 
   /* ======================================================================= */

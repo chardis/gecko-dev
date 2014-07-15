@@ -49,9 +49,10 @@ public:
   Notify(JSContext* aCx, workers::Status aStatus) MOZ_OVERRIDE;
 };
 
-class Promise MOZ_FINAL : public nsISupports,
-                          public nsWrapperCache
+class Promise : public nsISupports,
+                public nsWrapperCache
 {
+  friend class AbortablePromise;
   friend class NativePromiseCallback;
   friend class PromiseResolverMixin;
   friend class PromiseResolverTask;
@@ -66,6 +67,7 @@ class Promise MOZ_FINAL : public nsISupports,
   friend class WorkerPromiseTask;
   friend class WrapperPromiseCallback;
 
+  virtual
   ~Promise();
 
 public:
