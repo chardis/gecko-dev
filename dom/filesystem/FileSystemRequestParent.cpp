@@ -28,7 +28,7 @@ FileSystemRequestParent::~FileSystemRequestParent()
     case FileSystemParams::TFileSystem##name##Params: {                        \
       const FileSystem##name##Params& p = aParams;                             \
       mFileSystem = FileSystemBase::FromString(p.filesystem());                \
-      mTask = new name##Task(mFileSystem, p, this);                             \
+      mTask = new name##Task(mFileSystem, p, this);                            \
       break;                                                                   \
     }
 
@@ -81,6 +81,7 @@ FileSystemRequestParent::ActorDestroy(ActorDestroyReason why)
   if (!mFileSystem) {
     return;
   }
+  mTask->Abort();
   mFileSystem->Shutdown();
   mFileSystem = nullptr;
 }
@@ -88,7 +89,7 @@ FileSystemRequestParent::ActorDestroy(ActorDestroyReason why)
 bool
 FileSystemRequestParent::RecvAbortMove()
 {
-  static_cast<MoveTask*>(mTask.get())->AbortCallback();
+  mTask->Abort();
   return true;
 }
 

@@ -43,8 +43,8 @@ public:
   virtual void
   GetPermissionAccessType(nsCString& aAccess) const MOZ_OVERRIDE;
 
-  void
-  AbortCallback();
+  virtual void
+  AbortCallback() MOZ_OVERRIDE;
 
 protected:
   virtual FileSystemParams
@@ -71,7 +71,6 @@ private:
   nsCOMPtr<nsIDOMFile> mSrcFile;
   nsString mDestDirectory;
   nsString mDestName;
-  bool bAbort;
 };
 
 } // namespace dom

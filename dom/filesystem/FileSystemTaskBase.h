@@ -122,6 +122,14 @@ public:
   Start();
 
   /*
+   * Stop the task. If the task is running the child process, it will be
+   * forwarded to parent process by IPC, or else, set mAbort=true to
+   * do the working task.
+   */
+  void
+  Abort();
+
+  /*
    * The error codes are defined in xpcom/base/ErrorList.h and their
    * corresponding error name and message are defined in dom/base/domerr.msg.
    */
@@ -212,6 +220,8 @@ protected:
 
   nsRefPtr<FileSystemBase> mFileSystem;
   nsRefPtr<FileSystemRequestParent> mRequestParent;
+
+  bool mAbort;
 private:
   /*
    * After finishing the task operation, handle the task result.

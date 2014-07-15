@@ -217,9 +217,9 @@ MoveTask::MoveDirectory(nsCOMPtr<nsIFile> aSrcFile, const nsAString& destRealPat
     return rv;
 
   bool more;
-  while (NS_SUCCEEDED(enumerator->HasMoreElements(&more)) && more && !bAbort) {
+  while (NS_SUCCEEDED((rv = enumerator->HasMoreElements(&more))) && more && !mAbort) {
     nsCOMPtr<nsISupports> next;
-    if (NS_FAILED(enumerator->GetNext(getter_AddRefs(next)))) {
+    if (NS_FAILED((rv = enumerator->GetNext(getter_AddRefs(next))))) {
       break;
     }
     nsCOMPtr<nsIFile> subfile = do_QueryInterface(next);
@@ -250,7 +250,7 @@ MoveTask::MoveDirectory(nsCOMPtr<nsIFile> aSrcFile, const nsAString& destRealPat
       }
     }
   }
-  if (bAbort) {
+  if (mAbort) {
     rv = NS_ERROR_ABORT;
   }
   return rv;
@@ -259,7 +259,7 @@ MoveTask::MoveDirectory(nsCOMPtr<nsIFile> aSrcFile, const nsAString& destRealPat
 void
 MoveTask::AbortCallback() {
   if (FileSystemUtils::IsParentProcess()) {
-    bAbort = true;
+    mAbort = true;
     return;
   }
   SendAbortMove(); 

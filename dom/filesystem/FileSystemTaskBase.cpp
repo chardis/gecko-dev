@@ -33,6 +33,7 @@ FileSystemTaskBase::FileSystemTaskBase(FileSystemBase* aFileSystem,
   : mErrorValue(NS_OK)
   , mFileSystem(aFileSystem)
   , mRequestParent(aParent)
+  , mAbort(false)
 {
   MOZ_ASSERT(FileSystemUtils::IsParentProcess(),
              "Only call from parent process!");
@@ -81,6 +82,12 @@ FileSystemTaskBase::Start()
   NS_ADDREF_THIS();
   ContentChild::GetSingleton()->SendPFileSystemRequestConstructor(this,
     GetRequestParams(mFileSystem->ToString()));
+}
+
+void
+FileSystemTaskBase::Abort()
+{
+  mAbort = true;
 }
 
 NS_IMETHODIMP
