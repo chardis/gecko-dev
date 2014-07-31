@@ -174,21 +174,41 @@ FileSystemTaskBase::Recv__delete__(const FileSystemResponseValue& aValue)
 }
 
 bool
-FileSystemTaskBase::RecvNotify(const FileSystemResponseValue& value)
+FileSystemTaskBase::RecvNotify(const FileSystemResponseValue& aValue)
 {
-  NotifyProgress(value);
+  SetRequestProgress(aValue);
+  NotifyProgress();
   return true;
 }
 
 void
 FileSystemTaskBase::HandlerNotify()
 {
+  if (mRequestParent) {
+    if (mRequestParent->IsRunning())
+      unused << mRequestParent->SendNotify(GetRequestProgress());
+  } else {
+    NotifyProgress();
+  }
 }
 
 void
-FileSystemTaskBase::NotifyProgress(const FileSystemResponseValue& aValue)
+FileSystemTaskBase::NotifyProgress()
 {
 }
+
+void
+FileSystemTaskBase::SetRequestProgress(const FileSystemResponseValue& aValue)
+{
+}
+
+FileSystemResponseValue
+FileSystemTaskBase::GetRequestProgress()
+{
+  FileSystemDirectoryResponse r;
+  return r;
+}
+
 
 BlobParent*
 FileSystemTaskBase::GetBlobParent(nsIDOMFile* aFile) const

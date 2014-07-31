@@ -54,17 +54,20 @@ protected:
   virtual void
   SetSuccessRequestResult(const FileSystemResponseValue& aValue) MOZ_OVERRIDE;
 
+  virtual void
+  SetRequestProgress(const FileSystemResponseValue& aValue) MOZ_OVERRIDE;
+
+  virtual FileSystemResponseValue
+  GetRequestProgress() MOZ_OVERRIDE;
+
   virtual nsresult
   Work() MOZ_OVERRIDE;
 
   virtual void
   HandlerCallback() MOZ_OVERRIDE;
 
-  virtual void
-  HandlerNotify() MOZ_OVERRIDE;
-
   void
-  NotifyProgress(const FileSystemResponseValue& aValue) MOZ_OVERRIDE;
+  NotifyProgress() MOZ_OVERRIDE;
 
   nsresult MoveDirectory(nsCOMPtr<nsIFile> aSrcFile, const nsAString& destRealPath);
 private:

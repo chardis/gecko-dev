@@ -313,28 +313,32 @@ MoveTask::HandlerCallback()
 }
 
 void
-MoveTask::HandlerNotify()
+MoveTask::SetRequestProgress(const FileSystemResponseValue& aValue)
 {
-  if (mProgressFiles.IsEmpty())
-    return;
+  MutexAutoLock lock(mMutex);
+  FileSystemDirectoryResponse r = aValue;
+  nsString realPath = r.realPath();
+  mProgressFiles.AppendElement(realPath);
+}
+
+FileSystemResponseValue
+MoveTask::GetRequestProgress()
+{
   MutexAutoLock lock(mMutex);
   FileSystemDirectoryResponse r;
   r.realPath() = mProgressFiles[0];
   mProgressFiles.RemoveElementAt(0);
-
-  if (mRequestParent) {
-    if (mRequestParent->IsRunning())
-      unused << mRequestParent->SendNotify(r);
-  } else {
-    NotifyProgress(r);
-  }
+  return r;
 }
 
 void
-MoveTask::NotifyProgress(const FileSystemResponseValue& aValue)
+MoveTask::NotifyProgress()
 {
-  FileSystemDirectoryResponse r = aValue;
-  nsString realPath = r.realPath();
+  if (mProgressFiles.IsEmpty())
+    return;
+  MutexAutoLock lock(mMutex);
+  nsString realPath = mProgressFiles[0];
+  mProgressFiles.RemoveElementAt(0);
   AutoSafeJSContext cx;
   JSString* strValue = JS_NewUCStringCopyZ(cx, realPath.get());
   JS::Rooted<JS::Value> valValue(cx, STRING_TO_JSVAL(strValue));

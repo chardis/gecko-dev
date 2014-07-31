@@ -163,7 +163,24 @@ public:
   HandlerNotify();
 
   virtual void
-  NotifyProgress(const FileSystemResponseValue& aValue);
+  NotifyProgress();
+
+  /*
+   * Unwrap the IPC message to get the task progress.
+   * It will be called when the task is completed and an IPC message is received
+   * in the child process and we want to get the task progress.
+   */
+  virtual void
+  SetRequestProgress(const FileSystemResponseValue& aValue);
+
+  /*
+   * Wrap the task success result to FileSystemResponseValue for sending it
+   * through IPC.
+   * It will be called when the task is completed successfully and we need to
+   * send the task success result back to the child process.
+   */
+  virtual FileSystemResponseValue
+  GetRequestProgress();
 
   NS_DECL_NSIRUNNABLE
 protected:
@@ -235,7 +252,7 @@ protected:
 
   // Overrides PFileSystemRequestChild
   virtual bool
-  RecvNotify(const FileSystemResponseValue& value) MOZ_OVERRIDE;
+  RecvNotify(const FileSystemResponseValue& aValue) MOZ_OVERRIDE;
 
   BlobParent*
   GetBlobParent(nsIDOMFile* aFile) const;

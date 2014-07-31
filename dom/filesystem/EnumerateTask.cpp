@@ -239,24 +239,26 @@ EnumerateTask::HandlerCallback()
 }
 
 void
-EnumerateTask::HandlerNotify()
+EnumerateTask::SetRequestProgress(const FileSystemResponseValue& aValue)
 {
-/*  if (mRequestParent) {
-    if (mRequestParent->IsRunning())
-      unused << mRequestParent->SendNotify();
-  } else {
-    NotifyProgress();
-  }*/
+/*  MutexAutoLock lock(mMutex);
+  FileSystemDirectoryResponse r = aValue;
+  nsString realPath = r.realPath();
+  mProgressFiles.AppendElement(realPath);*/
 }
 
-void EnumerateTask::NotifyProgress(const FileSystemResponseValue& aValue)
+FileSystemResponseValue
+EnumerateTask::GetRequestProgress()
 {
-/*  AutoSafeJSContext cx;
-  JSString* strValue = JS_NewUCStringCopyZ(cx, aValue.get());
-  JS::Rooted<JS::Value> valValue(cx, STRING_TO_JSVAL(strValue));
-  Optional<JS::Handle<JS::Value>> aValue;
-  aValue.Value() = valValue;
-  mAbortableProgressPromise->NotifyProgress(aValue);*/
+  FileSystemDirectoryResponse r;
+  /* MutexAutoLock lock(mMutex);
+  r.realPath() = mProgressFiles[0];
+  mProgressFiles.RemoveElementAt(0);*/
+  return r;
+}
+
+void EnumerateTask::NotifyProgress()
+{
 }
 
 void

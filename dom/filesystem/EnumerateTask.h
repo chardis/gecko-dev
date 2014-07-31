@@ -57,13 +57,16 @@ protected:
   Work() MOZ_OVERRIDE;
 
   virtual void
+  SetRequestProgress(const FileSystemResponseValue& aValue) MOZ_OVERRIDE;
+
+  virtual FileSystemResponseValue
+  GetRequestProgress() MOZ_OVERRIDE;
+
+  virtual void
   HandlerCallback() MOZ_OVERRIDE;
 
   virtual void
-  HandlerNotify() MOZ_OVERRIDE;
-
-  virtual void
-  NotifyProgress(const FileSystemResponseValue& aValue) MOZ_OVERRIDE;
+  NotifyProgress() MOZ_OVERRIDE;
 
   nsresult EnumerateDirectory(nsCOMPtr<nsIFile> aSrcFile);
 private:
